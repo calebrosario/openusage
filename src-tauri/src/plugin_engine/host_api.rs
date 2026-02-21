@@ -4,12 +4,15 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 
-const WHITELISTED_ENV_VARS: [&str; 5] = [
+const WHITELISTED_ENV_VARS: [&str; 8] = [
     "CODEX_HOME",
     "ZAI_API_KEY",
     "GLM_API_KEY",
     "MINIMAX_API_KEY",
     "MINIMAX_API_TOKEN",
+    "XAI_API_KEY",
+    "XAI_MANAGEMENT_KEY",
+    "XAI_TEAM_ID",
 ];
 
 fn last_non_empty_trimmed_line(text: &str) -> Option<String> {
