@@ -44,7 +44,7 @@ function mockBalanceApi(ctx, balance, usageTimeSeries = null) {
 describe("grok plugin", () => {
   beforeEach(() => {
     delete globalThis.__openusage_plugin
-    vi.resetModules()
+    if (vi.resetModules) vi.resetModules()
   })
 
   afterEach(() => {
@@ -92,7 +92,7 @@ describe("grok plugin", () => {
     expect(creditsLine.label).toBe("Credits")
     expect(creditsLine.format.kind).toBe("dollars")
     expect(creditsLine.limit).toBe(25.5) // 2550 cents / 100 = $25.50 prepaid
-    expect(creditsLine.used).toBe(25.5) // no usage, so remaining = prepaid
+    expect(creditsLine.used).toBe(0) // no usage
   })
 
   it("returns credits with used amount from timeSeries", async () => {
@@ -134,7 +134,7 @@ describe("grok plugin", () => {
     const result = plugin.probe(ctx)
 
     expect(result.lines[0].label).toBe("Credits")
-    expect(result.lines[0].used).toBe(96.97966385) // 100 - 3.02033615 = remaining balance
+    expect(result.lines[0].used).toBe(3.02033615) // 0.08241995 + 2.9379162 = usage amount
     expect(result.lines[0].limit).toBe(100) // 10000 cents / 100 = $100.00 prepaid
   })
 
@@ -229,7 +229,7 @@ describe("grok plugin", () => {
     const result = plugin.probe(ctx)
 
     expect(result.lines[0].label).toBe("Credits")
-    expect(result.lines[0].used).toBe(10) // 1000 cents / 100 = $10.00 remaining (no usage)
+    expect(result.lines[0].used).toBe(0) // no usage data available
     expect(result.lines[0].limit).toBe(10) // 1000 cents / 100 = $10.00 prepaid
   })
 
@@ -266,7 +266,7 @@ describe("grok plugin", () => {
 
     expect(result.lines[0].label).toBe("Credits")
     expect(result.lines[0].limit).toBe(5) // 500 cents / 100 = $5.00 prepaid
-    expect(result.lines[0].used).toBeCloseTo(5 - 3.06, 10) // remaining = $5 - $3.06 usage
+    expect(result.lines[0].used).toBe(3.06) // 306 cents / 100 = $3.06 usage
   })
 
   it("parses actual xAI API response format", async () => {
@@ -312,7 +312,7 @@ describe("grok plugin", () => {
 
     expect(result.lines[0].label).toBe("Credits")
     expect(result.lines[0].limit).toBe(4.94) // 494 cents / 100 = $4.94 prepaid
-    expect(result.lines[0].used).toBe(1.9196638500000005) // 4.94 - 3.02033615 = remaining balance
+    expect(result.lines[0].used).toBeCloseTo(3.02033615, 10) // 0.08241995 + 2.9379162 = usage
   })
 
   it("sends authorization header", async () => {
@@ -472,9 +472,9 @@ describe("grok plugin", () => {
       const plugin = await loadPlugin()
       const result = plugin.probe(ctx)
 
-      expect(result.lines[0].label).toBe("Credits")
-      expect(result.lines[0].limit).toBe(100) // 10000 cents / 100 = $100.00 prepaid
-      expect(result.lines[0].used).toBe(100) // no usage, so remaining = prepaid
+    expect(result.lines[0].label).toBe("Credits")
+    expect(result.lines[0].limit).toBe(100) // 10000 cents / 100 = $100.00 prepaid
+    expect(result.lines[0].used).toBe(0) // no usage, so used = 0
     })
 
     it("throws on auth error (API key)", async () => {

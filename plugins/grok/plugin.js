@@ -267,7 +267,7 @@
     if (prepaidUsd > 0) {
       lines.push(ctx.line.progress({
         label: "Credits",
-        used: remainingUsd,
+        used: usedUsd,
         limit: prepaidUsd,
         format: { kind: "dollars" },
       }))
