@@ -260,24 +260,16 @@
       }
     }
 
-    ctx.host.log.info("DEBUG Grok: usedUsd=" + usedUsd + ", prepaidUsd=" + Math.max(0, balanceUsd))
+    ctx.host.log.info("Grok: used=" + usedUsd + " prepaid=" + Math.max(0, balanceUsd))
 
     if (prepaidUsd > 0) {
       let finalUsedUsd = usedUsd
 
       if (finalUsedUsd >= prepaidUsd) {
-        ctx.host.log.warn("Usage (" + finalUsedUsd + ") >= prepaid (" + prepaidUsd + "), assuming no real usage. API may be returning prepaid balance instead of consumption.")
+        ctx.host.log.warn("Grok: usage >= prepaid, assuming 0 usage")
         finalUsedUsd = 0
       }
 
-      const progressLine = {
-        type: "progress",
-        label: "Credits",
-        used: finalUsedUsd,
-        limit: prepaidUsd,
-        format: { kind: "dollars" },
-      }
-      ctx.host.log.info("DEBUG Grok: sending progress line: " + JSON.stringify(progressLine))
       lines.push(ctx.line.progress({
         label: "Credits",
         used: finalUsedUsd,
