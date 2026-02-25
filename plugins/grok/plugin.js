@@ -102,7 +102,6 @@
   }
 
   function parseUsageSpend(data) {
-    console.log("[Grok] parseUsageSpend called with:", JSON.stringify(data).substring(0, 200))
     if (data.timeSeries && Array.isArray(data.timeSeries)) {
       let total = 0
       for (let i = 0; i < data.timeSeries.length; i += 1) {
