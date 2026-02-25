@@ -264,17 +264,24 @@
     ctx.host.log.info("DEBUG Grok: usedUsd=" + usedUsd + ", prepaidUsd=" + Math.max(0, balanceUsd))
 
     if (prepaidUsd > 0) {
+      let finalUsedUsd = usedUsd
+
+      if (finalUsedUsd >= prepaidUsd) {
+        ctx.host.log.warn("Usage (" + finalUsedUsd + ") >= prepaid (" + prepaidUsd + "), assuming no real usage. API may be returning prepaid balance instead of consumption.")
+        finalUsedUsd = 0
+      }
+
       const progressLine = {
         type: "progress",
         label: "Credits",
-        used: usedUsd,
+        used: finalUsedUsd,
         limit: prepaidUsd,
         format: { kind: "dollars" },
       }
       ctx.host.log.info("DEBUG Grok: sending progress line: " + JSON.stringify(progressLine))
       lines.push(ctx.line.progress({
         label: "Credits",
-        used: usedUsd,
+        used: finalUsedUsd,
         limit: prepaidUsd,
         format: { kind: "dollars" },
       }))
