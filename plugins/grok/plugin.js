@@ -263,12 +263,15 @@
 
     ctx.host.log.info("DEBUG Grok: usedUsd=" + usedUsd + ", prepaidUsd=" + Math.max(0, balanceUsd))
 
-
-    const lines = []
-    const prepaidUsd = Math.max(0, balanceUsd)
-    const remainingUsd = Math.max(0, Math.abs(balanceUsd - usedUsd))
-
     if (prepaidUsd > 0) {
+      const progressLine = {
+        type: "progress",
+        label: "Credits",
+        used: usedUsd,
+        limit: prepaidUsd,
+        format: { kind: "dollars" },
+      }
+      ctx.host.log.info("DEBUG Grok: sending progress line: " + JSON.stringify(progressLine))
       lines.push(ctx.line.progress({
         label: "Credits",
         used: usedUsd,
