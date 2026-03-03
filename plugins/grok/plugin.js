@@ -260,7 +260,9 @@
       }
     }
 
-    ctx.host.log.info("Grok: used=" + usedUsd + " prepaid=" + Math.max(0, balanceUsd))
+    const lines = []
+    const prepaidUsd = Math.max(0, balanceUsd)
+    ctx.host.log.info("Grok: used=" + usedUsd + " prepaid=" + prepaidUsd)
 
     if (prepaidUsd > 0) {
       let finalUsedUsd = usedUsd
