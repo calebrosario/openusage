@@ -251,14 +251,17 @@
     let usageData
     try {
       usageData = fetchUsage(ctx, managementKey, teamId)
+      ctx.host.log.info("Grok DEBUG: usageData received: " + (usageData ? "yes" : "null"))
       if (usageData) {
+        ctx.host.log.info("Grok DEBUG: usageData keys: " + Object.keys(usageData).join(", "))
         usedUsd = parseUsageSpend(usageData) || 0
+        ctx.host.log.info("Grok DEBUG: parseUsageSpend returned: " + usedUsd)
       }
     } catch (e) {
-      if (e !== null) {
-        ctx.host.log.info("usage fetch skipped/failed: " + String(e))
-      }
+      ctx.host.log.warn("Grok DEBUG: usage fetch exception: " + String(e))
     }
+
+    ctx.host.log.info("Grok: final usedUsd=" + usedUsd + " balanceUsd=" + balanceUsd)
 
     const lines = []
     const prepaidUsd = Math.max(0, balanceUsd)
