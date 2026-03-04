@@ -196,6 +196,7 @@
   function fetchUsage(ctx, managementKey, teamId) {
     const usageUrl = MANAGEMENT_API_BASE + USAGE_PATH.replace("{team_id}", teamId)
     let resp
+    let errorReason = ""
     try {
       const now = new Date()
       const yearAgo = new Date(now)
@@ -232,19 +233,19 @@
         timeoutMs: 10000,
       })
     } catch (e) {
-      ctx.host.log.warn("usage request failed (" + usageUrl + "): " + String(e))
-      throw null
+      errorReason = "network:" + String(e).substring(0, 30)
+      throw { error: errorReason }
     }
 
     if (resp.status < 200 || resp.status >= 300) {
-      ctx.host.log.warn("usage request returned status " + String(resp.status) + " (" + usageUrl + ")")
-      throw null
+      errorReason = "status:" + String(resp.status)
+      throw { error: errorReason }
     }
 
     const parsed = ctx.util.tryParseJson(resp.bodyText)
     if (!parsed || typeof parsed !== "object") {
-      ctx.host.log.warn("usage request returned invalid JSON (" + usageUrl + ")")
-      throw null
+      errorReason = "json:invalid"
+      throw { error: errorReason }
     }
 
     return parsed
@@ -281,7 +282,11 @@
         rawKeys = "null-response"
       }
     } catch (e) {
-      rawKeys = "exception:" + String(e)
+      if (e && typeof e === "object" && e.error) {
+        rawKeys = e.error
+      } else {
+        rawKeys = "ex:" + String(e).substring(0, 20)
+      }
     }
     const lines = []
     const prepaidUsd = Math.max(0, balanceUsd)
