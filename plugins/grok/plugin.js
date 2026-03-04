@@ -254,6 +254,30 @@
       ctx.host.log.info("Grok DEBUG: usageData received: " + (usageData ? "yes" : "null"))
       if (usageData) {
         ctx.host.log.info("Grok DEBUG: usageData keys: " + Object.keys(usageData).join(", "))
+        // Log raw response for debugging (truncate if too long)
+        const responseStr = JSON.stringify(usageData)
+        ctx.host.log.info("Grok DEBUG: raw response (first 500 chars): " + responseStr.substring(0, 500))
+        // Check timeSeries structure
+        if (usageData.timeSeries) {
+          ctx.host.log.info("Grok DEBUG: timeSeries length: " + usageData.timeSeries.length)
+          if (usageData.timeSeries.length > 0) {
+            const firstSeries = usageData.timeSeries[0]
+            ctx.host.log.info("Grok DEBUG: firstSeries keys: " + Object.keys(firstSeries).join(", "))
+            if (firstSeries.dataPoints) {
+              ctx.host.log.info("Grok DEBUG: dataPoints length: " + firstSeries.dataPoints.length)
+              if (firstSeries.dataPoints.length > 0) {
+                ctx.host.log.info("Grok DEBUG: first dataPoint: " + JSON.stringify(firstSeries.dataPoints[0]))
+              }
+            }
+          }
+        }
+        // Check changes structure
+        if (usageData.changes) {
+          ctx.host.log.info("Grok DEBUG: changes length: " + usageData.changes.length)
+          if (usageData.changes.length > 0) {
+            ctx.host.log.info("Grok DEBUG: first change: " + JSON.stringify(usageData.changes[0]))
+          }
+        }
         usedUsd = parseUsageSpend(usageData) || 0
         ctx.host.log.info("Grok DEBUG: parseUsageSpend returned: " + usedUsd)
       }
