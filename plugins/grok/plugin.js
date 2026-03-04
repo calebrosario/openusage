@@ -269,17 +269,19 @@
 
     let usedUsd = 0
     let usageDebug = { total: 0, dpCount: 0, positiveCount: 0, method: "none" }
+    let rawKeys = "no-data"
     let usageData
     try {
       usageData = fetchUsage(ctx, managementKey, teamId)
       if (usageData) {
+        rawKeys = Object.keys(usageData).join(",")
         usageDebug = parseUsageSpend(usageData)
         usedUsd = usageDebug.total || 0
+      } else {
+        rawKeys = "null-response"
       }
     } catch (e) {
-      if (e !== null) {
-        ctx.host.log.info("usage fetch skipped/failed: " + String(e))
-      }
+      rawKeys = "exception:" + String(e)
     }
     const lines = []
     const prepaidUsd = Math.max(0, balanceUsd)
@@ -323,10 +325,9 @@
     // DEBUG: Show parsing details
     lines.push(ctx.line.text({
       label: "DEBUG",
-      value: "total=" + usageDebug.total.toFixed(2) + " dp=" + usageDebug.dpCount + " pos=" + usageDebug.positiveCount + " method=" + usageDebug.method,
+      value: "keys=" + rawKeys + " total=" + usageDebug.total.toFixed(2),
       color: "#ff6600",
     }))
-
     return { lines }
   }
 
