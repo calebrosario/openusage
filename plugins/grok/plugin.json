@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "grok",
+  "name": "Grok",
+  "version": "0.0.1",
+  "entry": "plugin.js",
+  "icon": "icon.svg",
+  "brandColor": "#000000",
+  "links": [
+    { "label": "Console", "url": "https://console.x.ai/" },
+    { "label": "Usage", "url": "https://console.x.ai/team/default/usage" },
+    { "label": "Billing", "url": "https://console.x.ai/team/default/billing" }
+  ],
+  "lines": [
+    { "type": "progress", "label": "Credits", "scope": "overview", "primaryOrder": 1 }
+  ]
+}
