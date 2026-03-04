@@ -229,8 +229,7 @@
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: body,
-        timeoutMs: 10000,
+        bodyText: body,
       })
     } catch (e) {
       errorReason = "network:" + String(e).substring(0, 30)
