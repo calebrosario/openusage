@@ -326,6 +326,13 @@
       color: "#22c55e",
     }))
 
+    // DEBUG: Show actual values in UI
+    lines.push(ctx.line.text({
+      label: "DEBUG",
+      value: "used=" + usedUsd.toFixed(2) + " limit=" + prepaidUsd.toFixed(2),
+      color: "#ff6600",
+    }))
+
     return { lines }
   }
 
