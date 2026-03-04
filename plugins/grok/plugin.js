@@ -102,50 +102,64 @@
   }
 
   function parseUsageSpend(data) {
+    let debugInfo = { total: 0, dpCount: 0, positiveCount: 0, method: "none" }
+    
     if (data.timeSeries && Array.isArray(data.timeSeries)) {
-      let total = 0
+      debugInfo.method = "timeSeries"
       for (let i = 0; i < data.timeSeries.length; i += 1) {
         const series = data.timeSeries[i]
         if (series.dataPoints && Array.isArray(series.dataPoints)) {
           for (let j = 0; j < series.dataPoints.length; j += 1) {
             const dp = series.dataPoints[j]
+            debugInfo.dpCount += 1
             if (dp.values && Array.isArray(dp.values) && dp.values[0] !== undefined) {
               const n = Number(dp.values[0])
               if (Number.isFinite(n) && n > 0) {
-                total += n  // usage API returns dollars, keep as is
+                debugInfo.total += n
+                debugInfo.positiveCount += 1
               }
             }
           }
         }
       }
-      if (total > 0) return total
+      if (debugInfo.total > 0) return debugInfo
     }
 
     if (data.changes && Array.isArray(data.changes)) {
-      let total = 0
+      debugInfo.method = "changes"
       for (let i = 0; i < data.changes.length; i += 1) {
         const change = data.changes[i]
         if (change.changeOrigin === "SPEND" && change.amount && change.amount.val !== undefined) {
           const n = Number(change.amount.val)
           if (Number.isFinite(n) && n > 0) {
-            total += n / 100  // convert cents to dollars for consistency with timeSeries
+            debugInfo.total += n / 100
           }
         }
       }
-      if (total > 0) return total
+      if (debugInfo.total > 0) return debugInfo
     }
 
+    debugInfo.method = "fields"
     let spend = readNumberField(data, ["total_cost", "totalCost", "spend", "used", "usage_cost", "usageCost"])
-    if (spend !== null) return spend
+    if (spend !== null) {
+      debugInfo.total = spend
+      return debugInfo
+    }
 
     if (data.usage) {
       spend = readNumberField(data.usage, ["total_cost", "totalCost", "spend", "used", "cost"])
-      if (spend !== null) return spend
+      if (spend !== null) {
+        debugInfo.total = spend
+        return debugInfo
+      }
     }
 
     if (data.summary) {
       spend = readNumberField(data.summary, ["total_cost", "totalCost", "spend", "used", "cost"])
-      if (spend !== null) return spend
+      if (spend !== null) {
+        debugInfo.total = spend
+        return debugInfo
+      }
     }
 
     const items = data.items || data.usage_items
@@ -160,17 +174,23 @@
           hasValue = true
         }
       }
-      if (hasValue) return total
+      if (hasValue) {
+        debugInfo.total = total
+        return debugInfo
+      }
     }
 
     for (const key in data) {
       if (/(cost|spend|used|usage)/i.test(key)) {
         const n = Number(data[key])
-        if (Number.isFinite(n) && n >= 0) return n
+        if (Number.isFinite(n) && n >= 0) {
+          debugInfo.total = n
+          return debugInfo
+        }
       }
     }
 
-    return null
+    return debugInfo
   }
 
   function fetchUsage(ctx, managementKey, teamId) {
@@ -248,45 +268,19 @@
     }
 
     let usedUsd = 0
+    let usageDebug = { total: 0, dpCount: 0, positiveCount: 0, method: "none" }
     let usageData
     try {
       usageData = fetchUsage(ctx, managementKey, teamId)
-      ctx.host.log.info("Grok DEBUG: usageData received: " + (usageData ? "yes" : "null"))
       if (usageData) {
-        ctx.host.log.info("Grok DEBUG: usageData keys: " + Object.keys(usageData).join(", "))
-        // Log raw response for debugging (truncate if too long)
-        const responseStr = JSON.stringify(usageData)
-        ctx.host.log.info("Grok DEBUG: raw response (first 500 chars): " + responseStr.substring(0, 500))
-        // Check timeSeries structure
-        if (usageData.timeSeries) {
-          ctx.host.log.info("Grok DEBUG: timeSeries length: " + usageData.timeSeries.length)
-          if (usageData.timeSeries.length > 0) {
-            const firstSeries = usageData.timeSeries[0]
-            ctx.host.log.info("Grok DEBUG: firstSeries keys: " + Object.keys(firstSeries).join(", "))
-            if (firstSeries.dataPoints) {
-              ctx.host.log.info("Grok DEBUG: dataPoints length: " + firstSeries.dataPoints.length)
-              if (firstSeries.dataPoints.length > 0) {
-                ctx.host.log.info("Grok DEBUG: first dataPoint: " + JSON.stringify(firstSeries.dataPoints[0]))
-              }
-            }
-          }
-        }
-        // Check changes structure
-        if (usageData.changes) {
-          ctx.host.log.info("Grok DEBUG: changes length: " + usageData.changes.length)
-          if (usageData.changes.length > 0) {
-            ctx.host.log.info("Grok DEBUG: first change: " + JSON.stringify(usageData.changes[0]))
-          }
-        }
-        usedUsd = parseUsageSpend(usageData) || 0
-        ctx.host.log.info("Grok DEBUG: parseUsageSpend returned: " + usedUsd)
+        usageDebug = parseUsageSpend(usageData)
+        usedUsd = usageDebug.total || 0
       }
     } catch (e) {
-      ctx.host.log.warn("Grok DEBUG: usage fetch exception: " + String(e))
+      if (e !== null) {
+        ctx.host.log.info("usage fetch skipped/failed: " + String(e))
+      }
     }
-
-    ctx.host.log.info("Grok: final usedUsd=" + usedUsd + " balanceUsd=" + balanceUsd)
-
     const lines = []
     const prepaidUsd = Math.max(0, balanceUsd)
     ctx.host.log.info("Grok: used=" + usedUsd + " prepaid=" + prepaidUsd)
@@ -326,10 +320,10 @@
       color: "#22c55e",
     }))
 
-    // DEBUG: Show actual values in UI
+    // DEBUG: Show parsing details
     lines.push(ctx.line.text({
       label: "DEBUG",
-      value: "used=" + usedUsd.toFixed(2) + " limit=" + prepaidUsd.toFixed(2),
+      value: "total=" + usageDebug.total.toFixed(2) + " dp=" + usageDebug.dpCount + " pos=" + usageDebug.positiveCount + " method=" + usageDebug.method,
       color: "#ff6600",
     }))
 
