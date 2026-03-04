@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { makeCtx } from "../test-helpers.js"
+import { readFileSync } from "fs"
 
 const TEAM_ID = "test-team-123"
 
 const loadPlugin = async () => {
-  await import("./plugin.js")
+  // Clear previous plugin registration
+  delete globalThis.__openusage_plugin
+  // Read and evaluate plugin code directly (bypasses module cache)
+  const code = readFileSync(new URL("./plugin.js", import.meta.url), "utf-8")
+  eval(code)
   return globalThis.__openusage_plugin
 }
 
@@ -43,8 +48,7 @@ function mockBalanceApi(ctx, balance, usageTimeSeries = null) {
 
 describe("grok plugin", () => {
   beforeEach(() => {
-    delete globalThis.__openusage_plugin
-    if (vi.resetModules) vi.resetModules()
+    vi.restoreAllMocks()
   })
 
   afterEach(() => {
@@ -370,8 +374,8 @@ describe("grok plugin", () => {
     expect(usageCall).toBeDefined()
     expect(usageCall?.[0]?.method).toBe("POST")
     expect(usageCall?.[0]?.headers["Content-Type"]).toBe("application/json")
-    expect(usageCall?.[0]?.body).toContain("analyticsRequest")
-    expect(usageCall?.[0]?.body).toContain("usd")
+    expect(usageCall?.[0]?.bodyText).toContain("analyticsRequest")
+    expect(usageCall?.[0]?.bodyText).toContain("usd")
   })
 
   describe("API key mode", () => {
